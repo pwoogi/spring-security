@@ -3,8 +3,7 @@ package com.example.springsec.controller;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Security;
 
@@ -40,6 +39,12 @@ public class HomeController {
                 .auth(SecurityContextHolder.getContext().getAuthentication())
                 .message("Admin 정보")
                 .build();
+
+    }
+    @ResponseBody
+    @GetMapping("/auth2")
+    public Authentication auth2(){
+        return SecurityContextHolder.getContext().getAuthentication();
 
     }
 }
