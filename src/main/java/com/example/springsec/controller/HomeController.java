@@ -3,48 +3,52 @@ package com.example.springsec.controller;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Security;
 
-@RestController
+@Controller
 public class HomeController {
 
-    @RequestMapping("/")
-    public String index(){
-        return "홈페이지";
+    @GetMapping("/")
+    public String main(){
+        return "index.html";
     }
 
-    @RequestMapping("/auth")
-    public Authentication auth(){
-        return SecurityContextHolder.getContext()
-                .getAuthentication();
+    @GetMapping("/login")
+    public String login(){
+        return "loginForm";
+    }
 
+    @GetMapping("/login-error")
+    public String loginError(Model model){
+        model.addAttribute("loginError", true);
+        return "loginForm";
+    }
+
+    @GetMapping("/access-denied")
+    public String accessDenied(){
+        return "AccessDenied";
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_USER')")
-    @RequestMapping("/user")
-    public SecurityMessage user(){
-        return SecurityMessage.builder()
-                .auth(SecurityContextHolder.getContext().getAuthentication())
-                .message("User 정보")
-                .build();
-
+    @GetMapping("/user-page")
+    public String userPage(){
+        return "UserPage";
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    @RequestMapping("/admin")
-    public SecurityMessage admin(){
-        return SecurityMessage.builder()
-                .auth(SecurityContextHolder.getContext().getAuthentication())
-                .message("Admin 정보")
-                .build();
-
+    @GetMapping("/admin-page")
+    public String adminPage(){
+        return "AdminPage";
     }
-    @ResponseBody
-    @GetMapping("/auth2")
-    public Authentication auth2(){
-        return SecurityContextHolder.getContext().getAuthentication();
 
+
+    @ResponseBody
+    @GetMapping("/auth")
+    public Authentication auth(){
+        return SecurityContextHolder.getContext().getAuthentication();
     }
 }

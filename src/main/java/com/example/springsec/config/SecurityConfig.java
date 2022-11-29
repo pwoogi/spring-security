@@ -1,5 +1,7 @@
 package com.example.springsec.config;
 
+import com.example.springsec.student.StudentManager;
+import com.example.springsec.teacher.TeacherManager;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -13,34 +15,33 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableWebSecurity(debug = true)
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final CustomAuthDetails customAuthDetails;
+    private final CustomAuthDetails customAuthDetail;
 
-    public SecurityConfig(CustomAuthDetails customAuthDetails) {
-        this.customAuthDetails = customAuthDetails;
+    public SecurityConfig(CustomAuthDetails customAuthDetail) {
+        this.customAuthDetail = customAuthDetail;
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication()
-                .withUser(User.builder()
-                        .username("user2")
-                        .password(passwordEncoder().encode("2222"))
-                        .roles("USER"))
-                .withUser(User.builder()
-                        .username("admin")
-                        .password(passwordEncoder().encode("3333"))
-                        .roles("ADMIN"));
-
-    }
-    @Bean
-    PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
-
+        auth
+                .inMemoryAuthentication()
+                .withUser(
+                        User.withDefaultPasswordEncoder()
+                                .username("user1")
+                                .password("1111")
+                                .roles("USER")
+                ).withUser(
+                        User.withDefaultPasswordEncoder()
+                                .username("admin")
+                                .password("2222")
+                                .roles("ADMIN")
+                );
     }
 
     @Bean
@@ -48,35 +49,42 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
         roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
         return roleHierarchy;
-
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+        CustomLoginFilter filter = new CustomLoginFilter(authenticationManager());
         http
-                .authorizeRequests(request -> {
-                    request
-                            .antMatchers("/").permitAll()
-                            .anyRequest().authenticated();
-                })
-                .formLogin(
-                        login -> login.loginPage("/login")
-                                .permitAll()
-                                .defaultSuccessUrl("/", false)
-                                .failureUrl("/login-error")
-                                .authenticationDetailsSource(customAuthDetails)
+                .authorizeRequests(request->
+                        request.antMatchers("/", "/login").permitAll()
+                                .anyRequest().authenticated()
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/"))
-                .exceptionHandling(exception -> exception.accessDeniedPage("/access-denied"))
+//                .formLogin(login->
+//                        login.loginPage("/login")
+//                                .loginProcessingUrl("/loginprocess")
+//                                .permitAll()
+//                                .defaultSuccessUrl("/", false)
+//                                .authenticationDetailsSource(customAuthDetail)
+//                                .failureUrl("/login-error")
+//                )
+                .addFilterAt(filter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout->
+                        logout.logoutSuccessUrl("/"))
+                .exceptionHandling(error->
+                        error.accessDeniedPage("/access-denied")
+                )
         ;
-
     }
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring()
-                .requestMatchers(
-                        PathRequest.toStaticResources().atCommonLocations()
-                );
+//        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+        web.ignoring() .antMatchers("/resources/**")
+                .antMatchers("/css/**")
+                .antMatchers("/vendor/**")
+                .antMatchers("/js/**")
+                .antMatchers("/favicon*/**")
+                .antMatchers("/img/**");
     }
+
 }
