@@ -1,6 +1,5 @@
 package com.example.springsec.config;
 
-import org.apache.coyote.RequestInfo;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 

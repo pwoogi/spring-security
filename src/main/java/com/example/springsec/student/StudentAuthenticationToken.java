@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Collection;
-import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -20,11 +19,7 @@ public class StudentAuthenticationToken implements Authentication {
     private String credentials;
     private String details;
     private boolean authenticated;
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return principal == null ? new HashSet<>() : principal.getRole();
-    }
+    private Set<GrantedAuthority> authorities;
 
 
     @Override

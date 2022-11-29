@@ -1,5 +1,7 @@
 package com.example.springsec.config;
 
+import com.example.springsec.student.StudentAuthenticationToken;
+import com.example.springsec.teacher.TeacherAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -11,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 
 public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
 
-    public CustomLoginFilter(AuthenticationManager authenticationManager){
+    public CustomLoginFilter(AuthenticationManager authenticationManager) {
         super(authenticationManager);
 
     }
@@ -22,9 +24,21 @@ public class CustomLoginFilter extends UsernamePasswordAuthenticationFilter {
         username = (username != null) ? username.trim() : "";
         String password = obtainPassword(request);
         password = (password != null) ? password : "";
-        UsernamePasswordAuthenticationToken authRequest = UsernamePasswordAuthenticationToken.unauthenticated(username,
-                password);
+        String type = request.getParameter("type");
+        if (type == null || !type.equals("teacher")) {
+            // student
+            StudentAuthenticationToken token = StudentAuthenticationToken.builder()
+                    .credentials(username)
+                    .build();
+            return this.getAuthenticationManager().authenticate(token);
+        }else {
+            // teacher
+            TeacherAuthenticationToken token = TeacherAuthenticationToken.builder()
+                    .credentials(username)
+                    .build();
+            return this.getAuthenticationManager().authenticate(token);
+        }
 
-        return this.getAuthenticationManager().authenticate(authRequest);
+
     }
 }

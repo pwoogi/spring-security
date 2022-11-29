@@ -3,52 +3,31 @@ package com.example.springsec.config;
 import com.example.springsec.student.StudentManager;
 import com.example.springsec.teacher.TeacherManager;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
-import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @EnableWebSecurity(debug = true)
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final CustomAuthDetails customAuthDetail;
+    private final StudentManager studentManager;
+    private final TeacherManager teacherManager;
 
-    public SecurityConfig(CustomAuthDetails customAuthDetail) {
-        this.customAuthDetail = customAuthDetail;
+    public SecurityConfig(StudentManager studentManager, TeacherManager teacherManager) {
+        this.studentManager = studentManager;
+        this.teacherManager = teacherManager;
     }
+
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth
-                .inMemoryAuthentication()
-                .withUser(
-                        User.withDefaultPasswordEncoder()
-                                .username("user1")
-                                .password("1111")
-                                .roles("USER")
-                ).withUser(
-                        User.withDefaultPasswordEncoder()
-                                .username("admin")
-                                .password("2222")
-                                .roles("ADMIN")
-                );
-    }
-
-    @Bean
-    RoleHierarchy roleHierarchy(){
-        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
-        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_USER");
-        return roleHierarchy;
+        auth.authenticationProvider(studentManager);
+        auth.authenticationProvider(teacherManager);
     }
 
     @Override
@@ -59,32 +38,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         request.antMatchers("/", "/login").permitAll()
                                 .anyRequest().authenticated()
                 )
-//                .formLogin(login->
-//                        login.loginPage("/login")
-//                                .loginProcessingUrl("/loginprocess")
-//                                .permitAll()
-//                                .defaultSuccessUrl("/", false)
-//                                .authenticationDetailsSource(customAuthDetail)
-//                                .failureUrl("/login-error")
-//                )
-                .addFilterAt(filter, UsernamePasswordAuthenticationFilter.class)
-                .logout(logout->
-                        logout.logoutSuccessUrl("/"))
-                .exceptionHandling(error->
-                        error.accessDeniedPage("/access-denied")
+                .formLogin(
+                        login->login.loginPage("/login")
+                                .permitAll()
+                                .defaultSuccessUrl("/", false)
+                                .failureUrl("/login-error")
                 )
+                .addFilterAt(filter, UsernamePasswordAuthenticationFilter.class)
+                .logout(logout->logout.logoutSuccessUrl("/"))
+                .exceptionHandling(e->e.accessDeniedPage("/access-denied"))
         ;
     }
 
+
     @Override
     public void configure(WebSecurity web) throws Exception {
-//        web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
-        web.ignoring() .antMatchers("/resources/**")
-                .antMatchers("/css/**")
-                .antMatchers("/vendor/**")
-                .antMatchers("/js/**")
-                .antMatchers("/favicon*/**")
-                .antMatchers("/img/**");
+        web.ignoring()
+                .antMatchers("/favicon.ico", "/resources/**", "/error")
+                .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+
     }
 
 }
