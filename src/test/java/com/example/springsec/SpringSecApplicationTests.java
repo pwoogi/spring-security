@@ -39,6 +39,7 @@ public class SpringSecApplicationTests {
 						"choi:1".getBytes()
 				)
 		);
+		// TODO: getBody 값 추출안되는 원인 찾기
 		HttpEntity<String> entity = new HttpEntity<>("", headers);
 		ResponseEntity<String> resp = client.exchange(url, HttpMethod.GET, entity, String.class);
 
